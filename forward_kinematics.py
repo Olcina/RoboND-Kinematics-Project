@@ -1,4 +1,5 @@
 import numpy
+import pickle
 from sympy import symbols, cos, sin, pi, sqrt, simplify, symbol
 from sympy.matrices import Matrix
 from DH_transform_matrix import get_DH_transform_matrix
@@ -77,3 +78,28 @@ print('T0_4 = ' ,simplify(T0_4.subs(subs)))
 print('T0_5 = ' ,simplify(T0_5.subs(subs)))
 print('T0_6 = ' ,simplify(T0_6.subs(subs)))
 print('T0_G = ' ,simplify(T0_G.subs(subs)))
+print('T0_2 = ' ,simplify(T0_2))
+print('T0_3 = ' ,simplify(T0_3))
+print('T0_4 = ' ,simplify(T0_4))
+print('T0_5 = ' ,simplify(T0_5))
+print('T0_6 = ' ,simplify(T0_6))
+print('T0_G = ' ,simplify(T0_G))
+
+
+#Add all matrix to a pickel container for posterior uses
+pickle_container = {}
+pickle_container['T1_2'] = T1_2
+pickle_container['T2_3'] = T2_3
+pickle_container['T3_4'] = T3_4
+pickle_container['T4_5'] = T4_5
+pickle_container['T5_6'] = T5_6
+pickle_container['T6_G'] = T6_G
+pickle_container['T0_1'] = T0_1
+pickle_container['T0_2'] = T0_2
+pickle_container['T0_3'] = T0_3
+pickle_container['T0_4'] = T0_4
+pickle_container['T0_5'] = T0_5
+pickle_container['T0_6'] = T0_6
+pickle_container['T0_G'] = T0_G
+
+pickle.dump(pickle_container, open('T0_X-matrix.pkl', "wb")) 
