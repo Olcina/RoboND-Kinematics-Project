@@ -25,14 +25,14 @@ tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
 
 q1,q2,q3,q4,q5,q6 = symbols('q1:7')
 
-#DG parameters
+#DH parameters
 s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
      alpha1:-pi/2 , a1:   0.35  , d2:     0 , tetha2: tetha2-pi/2,
      alpha2:    0 , a2:   1.25  , d3:     0 ,
      alpha3:-pi/2 , a3: -0.054  , d4:   1.5 ,
      alpha4: pi/2 , a4:      0  , d5:     0 ,
      alpha5:-pi/2 , a5:      0  , d6:     0 ,
-     alpha6:    0 , a6:      0  , d7: 0.193 , tetha7:       0,
+     alpha6:    0 , a6:      0  , d7: 0.303 , tetha7:       0,
 }
 
 #Generate the DH matrixs
@@ -45,11 +45,11 @@ T2_3 = T2_3.subs(s)
 T3_4 = simplify(get_DH_transform_matrix(alpha3,a3,d4,tetha4))
 T3_4 = T3_4.subs(s)
 T4_5 = simplify(get_DH_transform_matrix(alpha4,a4,d5,tetha5))
-T4_5 =T4_5.subs(s)
+T4_5 = T4_5.subs(s)
 T5_6 = simplify(get_DH_transform_matrix(alpha5,a5,d6,tetha6))
 T5_6 = T5_6.subs(s)
 T6_G = simplify(get_DH_transform_matrix(alpha6,a6,d7,tetha7))
-T6_G =T6_G.subs(s)
+T6_G = T6_G.subs(s)
 
 
 #Multiplication of transformation Matrix
@@ -102,4 +102,4 @@ pickle_container['T0_5'] = T0_5
 pickle_container['T0_6'] = T0_6
 pickle_container['T0_G'] = T0_G
 
-pickle.dump(pickle_container, open('T0_X-matrix.pkl', "wb")) 
+pickle.dump(pickle_container, open('T0_X-matrix.pkl', "wb"))

@@ -16,5 +16,12 @@ tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
 q1,q2,q3,q4,q5,q6 = symbols('q1:7')
 
 #apply the values to the matrix and see the results
-subs = {tetha1:0.55,tetha2:0.28,tetha3:-0.82,tetha4:4.39,tetha5:0.6,tetha6:1.46}
-print(matrix_dict['T0_G'].subs(subs))
+subs = {tetha1:1.66,tetha2:0.66,tetha3:0.0,tetha4:0.0,tetha5:0.0,tetha6:0.0}
+
+print('01 =',matrix_dict['T0_1'].subs(subs))
+print('02 =',matrix_dict['T0_2'].subs(subs))
+print('03 =',matrix_dict['T0_3'].subs(subs))
+print('04 =',matrix_dict['T0_4'].subs(subs))
+print('05 =',matrix_dict['T0_5'].subs(subs))
+print('06 =',matrix_dict['T0_6'].subs(subs))
+print('0G =',matrix_dict['T0_G'].subs(subs))
