@@ -10,6 +10,8 @@
 # Author: Harsh Pandya
 
 # import modules
+import cPickle as pickle
+import numpy as np
 import rospy
 import tf
 from kuka_arm.srv import *
@@ -73,7 +75,7 @@ def handle_calculate_IK(req):
             # Create individual transformation matrices
 
 
-            matrix_dict = pickle.load(open('~/T0_X-matrix.pkl','rb'))
+            #matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
             # Extract end-effector position and orientation from request
 	        # px,py,pz = end-effector position
 	        # roll, pitch, yaw = end-effector orientation
@@ -147,21 +149,21 @@ def handle_calculate_IK(req):
 
             q123 = {tetha1: q1, tetha2: q2_1, tetha3:q3_1}
             #now we calculate R0_3
-            T0_3 = matrix_dict['T0_3'].subs(q123)
-            R0_3 = T0_3[0:3,0:3]
+            #T0_3 = matrix_dict['T0_3'].subs(q123)
+            #R0_3 = T0_3[0:3,0:3]
 
             #and R3_6
 
-            R3_6 = R0_3.T * Rrpy
+            #R3_6 = R0_3.T * Rrpy
 
-            print(R3_6)
-            R3_6_anal = rot_z(tetha4)*rot_z(tetha5)*rot_z(tetha6)
-            print(simplify(R3_6_anal[0:3,0:3]))
+            #print(R3_6)
+            #R3_6_anal = rot_z(tetha4)*rot_z(tetha5)*rot_z(tetha6)
+            #print(simplify(R3_6_anal[0:3,0:3]))
             q4,q5,q6 = 0, 0, 0
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
-	        joint_trajectory_point.positions = [q1, q2_1, q3_1, q4, q5, q6]
-	        joint_trajectory_list.append(joint_trajectory_point)
+            joint_trajectory_point.positions = [q1, q2_1, q3_1, q4, q5, q6]
+            joint_trajectory_list.append(joint_trajectory_point)
 
         rospy.loginfo("length of Joint Trajectory List: %s" % len(joint_trajectory_list))
         return CalculateIKResponse(joint_trajectory_list)
