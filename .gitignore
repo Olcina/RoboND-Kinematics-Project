@@ -2,4 +2,5 @@
 Images/
 .ipynb_checkpoints/
 WRITEUP - Project2 Kinematics.ipynb
- __pycache__/
+ __pycache__/*
+__pycache__/
