@@ -95,16 +95,27 @@ def handle_calculate_IK(req):
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
 
             # Calculate joint angles using Geometric IK method
+            r, p, y = symbols('r p y')
 
-            Rrpy = rot_x(roll)*rot_y(pitch)*rot_z(yaw)
+            Rrpy = rot_x(r)*rot_y(p)*rot_z(y)
 
-            P_ee = Matrix([px,py,pz])
+            Rot_Error = rot_z.subs(y, pi) * rot_y.subs(p, -pi/2.0)
+
+            ROT_EE = Rrpy* Rot_Error
+
+            ROT_EE = ROT_EE.subs({'r': roll, 'y': yaw, 'p': pitch})
+
+
+            P_ee = Matrix([px],
+                          [py],
+                          [pz])
+
             R_x3 = Rrpy[0:3,2]
             print('P_ee = ',P_ee)
             print('R_x3 = ',R_x3)
             #calculte the Wrist position
 
-            WC_00 = P_ee - d7*R_x3
+            WC_00 = P_ee - d7 * ROT_EE[:,2]
             WC_00 = WC_00.subs(s)
             print('')
             print('Wrist position --need checkin with the robot sym')

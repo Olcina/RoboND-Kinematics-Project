@@ -43,10 +43,11 @@ s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
 matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
 
 
-#########################################################
+##############      VARIABLES       ########################
 NUMBER_OF_POINTS_TO_DRAW = 8
-#Define angles
 angles = {tetha1: 0,tetha2:pi/8, tetha3:pi/8,tetha4:0,tetha5:pi/2,tetha6:pi/4}
+############################################################
+
 #calculate_WC get the WC usingforward kinematics
 WC_00 = calculate_WC(angles)
 WC_00 = N(WC_00)
@@ -69,6 +70,8 @@ betha4 = atan2(s[a3],s[d4])
 q2 = pi/2 - betha1 - betha2
 q3 = pi/2 - betha3 + betha4
 #Define final angles for the Inverse Kinematics
+
+
 
 #create the figure
 fig = plt.figure()
