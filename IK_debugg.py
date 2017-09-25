@@ -3,11 +3,7 @@ from time import time
 from mpmath import radians
 import pickle
 import tf
-
-#Load the transformation matrix
-matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
-T0_3 = matrix_dict['T0_3']
-print(T0_3)
+from WC_calculation import calculate_WC, calculate_EE
 
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
@@ -63,6 +59,11 @@ test_cases = {1:[[[2.16135,-1.42635,1.55109],
                   [-2.99,-0.12,0.94,4.06,1.29,-4.12]],
               4:[],
               5:[]}
+
+#Load the transformation matrix from pickle object
+matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
+T0_3 = matrix_dict['T0_3']
+
 
 
 def test_code(test_case):
@@ -127,15 +128,13 @@ def test_code(test_case):
     P_ee = Matrix([[px], [py],[pz]])
 
     R_x3 = Rrpy[0:3,2]
-    print('P_ee = ',P_ee)
-    print('R_x3 = ',R_x3)
+    #print('P_ee = ',P_ee)
+    #print('R_x3 = ',R_x3)
     #calculte the Wrist position
 
     WC_00 = P_ee - s[d7] * ROT_EE[:,2]
     WC_00 = WC_00.subs(s)
 	
-    print(WC_00)
-
     ## Insert IK code here!
     #calculate q1
     q1 = atan2(WC_00[1],WC_00[0]).subs(s)
@@ -155,15 +154,26 @@ def test_code(test_case):
     #q2, q3
     q2 = pi/2 - betha1 - betha2
     q3 = pi/2 - betha3 + betha4
+	
+    #Calculate q4,q5,q6
+    angles = {tetha1: q1,tetha2:q2, tetha3:q3}
+    
+    R0_3 = T0_3[0:3,0:3]
+    R0_3 = R0_3.subs(angles)
 
-    #R0_3 = 
+    R3_6 = R0_3.inv("LU") * ROT_EE
+
+
+    q4 = atan2(R3_6[2,2], -R3_6[0,2])
+    q5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
+    q6 = atan2(-R3_6[1,1], R3_6[1,0])
 
     theta1 = q1
     theta2 = q2
     theta3 = q3
-    theta4 = 0
-    theta5 = 0
-    theta6 = 0
+    theta4 = q4
+    theta5 = q5
+    theta6 = q6
 
     ##
     ########################################################################################
@@ -173,13 +183,19 @@ def test_code(test_case):
     ## as the input and output the position of your end effector as your_ee = [x,y,z]
 
     ## (OPTIONAL) YOUR CODE HERE!
-
+    #calculate_WC get the WC usingforward kinematics
+    angles2_FK = {tetha1: q1,tetha2: q2, tetha3: q3,tetha4: q4,tetha5: q5,tetha6: q6}
+    WC_FK = calculate_WC(angles2_FK)
+    WC_FK = N(WC_FK)
+    
+    EE_FK = calculate_EE(angles2_FK)
+    EE_FK = N(EE_FK)
     ## End your code input for forward kinematics here!
     ########################################################################################
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
-    your_wc = [1,1,1] # <--- Load your calculated WC values in this array
-    your_ee = [1,1,1] # <--- Load your calculated end effector value from your forward kinematics
+    your_wc = [WC_FK[0],WC_FK[1],WC_FK[2]] # <--- Load your calculated WC values in this array
+    your_ee = [EE_FK[0],EE_FK[1],EE_FK[2]] # <--- Load your calculated end effector value from your forward kinematics
     ########################################################################################
 
     ## Error analysis
