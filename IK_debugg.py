@@ -1,7 +1,13 @@
 from sympy import *
 from time import time
 from mpmath import radians
+import pickle
 import tf
+
+#Load the transformation matrix
+matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
+T0_3 = matrix_dict['T0_3']
+print(T0_3)
 
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
@@ -9,6 +15,21 @@ You can generate additional test cases by setting up your kuka project and runni
 From here you can adjust the joint angles to find thetas, use the gripper to extract positions and orientation (in quaternion xyzw) and lastly use link 5
 to find the position of the wrist center. These newly generated test cases can be added to the test_cases dictionary.
 '''
+#load symbols for the DH parameters
+alpha0, alpha1, alpha2, alpha3, alpha4,alpha5, alpha6 = symbols('alpha0:7')
+a0,a1,a2,a3,a4,a5,a6 = symbols('a0:7')
+d1,d2,d3,d4,d5,d6,d7 = symbols('d1:8')
+tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
+#DH matrix
+s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
+     alpha1:-pi/2 , a1:   0.35  , d2:     0 , tetha2: tetha2-pi/2,
+     alpha2:    0 , a2:   1.25  , d3:     0 ,
+     alpha3:-pi/2 , a3: -0.054  , d4:   1.5 ,
+     alpha4: pi/2 , a4:      0  , d5:     0 ,
+     alpha5:-pi/2 , a5:      0  , d6:     0 ,
+     alpha6:    0 , a6:      0  , d7: 0.303 , tetha7:       0,
+}
+
 def rot_x(q):
     R_x = Matrix([[ 1,              0,        0],
                   [ 0,        cos(q), -sin(q)],
@@ -45,6 +66,7 @@ test_cases = {1:[[[2.16135,-1.42635,1.55109],
 
 
 def test_code(test_case):
+    
     ## Set up code
     ## Do not modify!
     x = 0
@@ -89,28 +111,30 @@ def test_code(test_case):
 
     # Calculate joint angles using Geometric IK method
     r, p, y = symbols('r p y')
+    
+    R_X = rot_x(r)
+    R_Y = rot_y(p)
+    R_Z = rot_z(y)
+    Rrpy = R_Z * R_Y * R_X
 
-    Rrpy = rot_x(r)*rot_y(p)*rot_z(y)
-
-    Rot_Error = rot_z.subs(y, pi) * rot_y.subs(p, -pi/2.0)
+    Rot_Error = R_Z.subs(y, pi) * R_Y.subs(p, -pi/2.0)
 
     ROT_EE = Rrpy* Rot_Error
 
     ROT_EE = ROT_EE.subs({'r': roll, 'y': yaw, 'p': pitch})
 
 
-    P_ee = Matrix([px],
-                  [py],
-                  [pz])
+    P_ee = Matrix([[px], [py],[pz]])
 
     R_x3 = Rrpy[0:3,2]
     print('P_ee = ',P_ee)
     print('R_x3 = ',R_x3)
     #calculte the Wrist position
 
-    WC_00 = P_ee - d7 * ROT_EE[:,2]
+    WC_00 = P_ee - s[d7] * ROT_EE[:,2]
     WC_00 = WC_00.subs(s)
-
+	
+    print(WC_00)
 
     ## Insert IK code here!
     #calculate q1
@@ -131,9 +155,12 @@ def test_code(test_case):
     #q2, q3
     q2 = pi/2 - betha1 - betha2
     q3 = pi/2 - betha3 + betha4
-    theta1 = 0
-    theta2 = 0
-    theta3 = 0
+
+    #R0_3 = 
+
+    theta1 = q1
+    theta2 = q2
+    theta3 = q3
     theta4 = 0
     theta5 = 0
     theta6 = 0
