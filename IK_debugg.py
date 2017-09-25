@@ -190,6 +190,7 @@ def test_code(test_case):
     
     EE_FK = calculate_EE(angles2_FK)
     EE_FK = N(EE_FK)
+
     ## End your code input for forward kinematics here!
     ########################################################################################
 
@@ -246,6 +247,6 @@ def test_code(test_case):
 
 if __name__ == "__main__":
     # Change test case number for different scenarios
-    test_case_number = 1
+    test_case_number = 3
 
     test_code(test_cases[test_case_number])
