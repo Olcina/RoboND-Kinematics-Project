@@ -10,7 +10,7 @@
 # Author: Harsh Pandya
 
 # import modules
-import cPickle as pickle
+import pickle
 import numpy as np
 import rospy
 import tf
@@ -21,8 +21,9 @@ from mpmath import *
 from sympy import *
 from rot_xyz import rot_x, rot_y, rot_z
 
-#Loa TRANS_MATRIX from pkl
+#Load TRANS_MATRIX from pkl
 matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
+T0_3 = matrix_dict['T0_3']
 # rad to deg conversion
 rad2deg = 180/np.pi
 
@@ -102,9 +103,10 @@ def handle_calculate_IK(req):
 
             WC_00 = P_ee - s[d7] * ROT_EE[:,2]
             WC_00 = WC_00.subs(s)
+            ### MY CODE FOR q1, q2, q3
 
             #calculate q1
-            q1 = atan2(WC_00[1],WC_00[0]).subs(s)
+            q11 = atan2(WC_00[1],WC_00[0]).subs(s)
             #first need the position of the WC in the 0_2 frame
             WC_z_1 = WC_00[2]-s[d1]
             WC_x_1 = sqrt(WC_00[0]**2 + WC_00[1]**2) - s[a1]
@@ -119,9 +121,21 @@ def handle_calculate_IK(req):
             betha3 = acos((b**2 + c**2 - a**2)/(2*b*c))
             betha4 = atan2(s[a3],s[d4])
             #q2, q3
-            q2 = pi/2 - betha1 - betha2
-            q3 = pi/2 - betha3 + betha4
-	
+            q22 = pi/2 - betha1 - betha2
+            q33 = pi/2 - betha3 + betha4
+	        ## UDACITY CODE for q1, q2, q3 
+            q1 = atan2(WC_00[1],WC_00[0])
+            side_a =  1.501
+            side_b = sqrt(pow((sqrt(WC_00[0]*WC_00[0] + WC_00[1]*WC_00[1]) - 0.35),2) + pow((WC_00[2]-0.75),2))
+            side_c = 1.25
+    
+            angle_a = acos((side_b * side_b + side_c * side_c - side_a * side_a) / (2 * side_b * side_c))
+            angle_b = acos((side_a * side_a + side_c * side_c - side_b * side_b) / (2 * side_a * side_c))
+            angle_c = acos((side_a * side_a + side_b * side_b - side_c * side_c) / (2 * side_a * side_b))
+
+            q2 = pi /2 - angle_a - atan2(WC_00[2] - 0.75, sqrt(WC_00[0] * WC_00[0] + WC_00[1] * WC_00[1]) - 0.35)
+            q3 = pi /2 - (angle_b + 0.036)
+
             #Calculate q4,q5,q6
             angles = {tetha1: q1,tetha2:q2, tetha3:q3}
             
@@ -129,8 +143,12 @@ def handle_calculate_IK(req):
             R0_3 = R0_3.subs(angles)
 
             R3_6 = R0_3.inv("LU") * ROT_EE
-
-
+            #Comparison between UDACITY and my solution -- NEAR 0.0 In simulation
+            print('q1 diff:', q1-q11)
+            print('q1 diff:', q2-q22)
+            print('q1 diff:', q3-q33)
+                
+                
             q4 = atan2(R3_6[2,2], -R3_6[0,2])
             q5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
             q6 = atan2(-R3_6[1,1], R3_6[1,0])
