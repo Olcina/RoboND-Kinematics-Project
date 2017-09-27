@@ -14,21 +14,82 @@ import pickle
 import numpy as np
 import rospy
 import tf
+import os
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
 from mpmath import *
 from sympy import *
 from rot_xyz import rot_x, rot_y, rot_z
-
-#Load TRANS_MATRIX from pkl
-matrix_dict = pickle.load(open('T0_X-matrix.pkl','rb'))
-T0_3 = matrix_dict['T0_3']
-# rad to deg conversion
-rad2deg = 180/np.pi
+from DH_transform_matrix import get_DH_transform_matrix
 
 
 def handle_calculate_IK(req):
+    #Load TRANS_MATRIX from pkl
+    # rad to deg conversion
+    rad2deg = 180/np.pi
+
+    # Define DH param symbols
+    alpha0, alpha1, alpha2, alpha3, alpha4,alpha5, alpha6 = symbols('alpha0:7')
+    a0,a1,a2,a3,a4,a5,a6 = symbols('a0:7')
+    d1,d2,d3,d4,d5,d6,d7 = symbols('d1:8')
+    tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
+
+
+    # Modified DH params
+    s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
+         alpha1:-pi/2 , a1:   0.35  , d2:     0 , tetha2: tetha2-pi/2,
+         alpha2:    0 , a2:   1.25  , d3:     0 ,
+         alpha3:-pi/2 , a3: -0.054  , d4:   1.5 ,
+         alpha4: pi/2 , a4:      0  , d5:     0 ,
+         alpha5:-pi/2 , a5:      0  , d6:     0 ,
+         alpha6:    0 , a6:      0  , d7: 0.303 , tetha7:       0,
+    }
+    #roll, pitch, yaw symbols
+    r, p, y = symbols('r p y')
+
+    #Load or dump TRANS_MATRIX from pkl
+    #T0_1
+    if not os.path.exists('T0_1.p'):
+        T0_1 = get_DH_transform_matrix(alpha0,a0,d1,tetha1).subs(s)
+        pickle.dump(T0_1,open('T0_1.p','wb'))
+    else:
+        T0_1 = pickle.load(open('T0_1.p','rb'))        
+    #T1_2
+
+    if not os.path.exists('T1_2.p'):
+        T1_2 = get_DH_transform_matrix(alpha1,a1,d2,tetha2).subs(s)
+        pickle.dump(T0_1,open('T1_2.p','wb'))
+    else:
+        T1_2 = pickle.load(open('T1_2.p','rb'))        
+
+    #T0_3
+    if not os.path.exists('T2_3.p'):
+        T2_3 = get_DH_transform_matrix(alpha2,a2,d3,tetha3).subs(s)
+        pickle.dump(T2_3,open('T2_3.p','wb'))
+    else:
+        T2_3 = pickle.load(open('T2_3.p','rb'))
+        
+    
+    #T0_3
+    if not os.path.exists('T0_3.p'):
+        T0_3 = T0_1 * T1_2 * T2_3
+        pickle.dump(T0_3,open('T0_3.p','wb'))
+    else:
+        T0_3 = pickle.load(open('T0_3.p','rb'))
+    
+
+    Rot_Error = rot_z(pi)*rot_y(-pi/2)
+
+    R_X = rot_x(r)
+    R_Y = rot_y(p)
+    R_Z = rot_z(y)
+
+    Rrpy = R_Z * R_Y * R_X * Rot_Error
+    
+     
+    R0_3 = T0_3[0:3,0:3]
+    R3_6 = R0_3**(-1) * Rrpy
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
     if len(req.poses) < 1:
         print "No valid poses received"
@@ -39,23 +100,6 @@ def handle_calculate_IK(req):
         for x in xrange(0, len(req.poses)):
             # IK code starts here
             joint_trajectory_point = JointTrajectoryPoint()
-
-            # Define DH param symbols
-            alpha0, alpha1, alpha2, alpha3, alpha4,alpha5, alpha6 = symbols('alpha0:7')
-            a0,a1,a2,a3,a4,a5,a6 = symbols('a0:7')
-            d1,d2,d3,d4,d5,d6,d7 = symbols('d1:8')
-            tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
-
-            # Modified DH params
-            s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
-                 alpha1:-pi/2 , a1:   0.35  , d2:     0 , tetha2: tetha2-pi/2,
-                 alpha2:    0 , a2:   1.25  , d3:     0 ,
-                 alpha3:-pi/2 , a3: -0.054  , d4:   1.5 ,
-                 alpha4: pi/2 , a4:      0  , d5:     0 ,
-                 alpha5:-pi/2 , a5:      0  , d6:     0 ,
-                 alpha6:    0 , a6:      0  , d7: 0.303 , tetha7:       0,
-            }
-
 
             # Define Modified DH Transformation matrix
                 # defined in: ~/RoboND-Kinematics-Project/DH_transform_matrix.py
@@ -75,23 +119,14 @@ def handle_calculate_IK(req):
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
 
             # Calculate joint angles using Geometric IK method
-            r, p, y = symbols('r p y')
 
-            R_X = rot_x(r)
-            R_Y = rot_y(p)
-            R_Z = rot_z(y)
-            Rrpy = R_Z * R_Y * R_X
 
-            Rot_Error = R_Z.subs(y, pi) * R_Y.subs(p, -pi/2.0)
-
-            ROT_EE = Rrpy* Rot_Error
-
-            ROT_EE = ROT_EE.subs({'r': roll, 'y': yaw, 'p': pitch})
+            ROT_EE = Rrpy.subs({'r': roll, 'y': yaw, 'p': pitch})
 
 
             P_ee = Matrix([[px], [py],[pz]])
 
-            R_x3 = Rrpy[0:3,2]
+            #R_x3 = Rrpy[0:3,2]
             #print('P_ee = ',P_ee)
             #print('R_x3 = ',R_x3)
             #calculte the Wrist position
@@ -136,20 +171,27 @@ def handle_calculate_IK(req):
             #Calculate q4,q5,q6
             angles = {tetha1: q1,tetha2:q2, tetha3:q3}
 
-            R0_3 = T0_3[0:3,0:3]
-            R0_3 = R0_3.subs(angles)
-
-            R3_6 = R0_3.inv("LU") * ROT_EE
-
+            R3_6_to_num = R3_6.subs({tetha1: q1,tetha2:q2, tetha3:q3, r: roll, y: yaw, p: pitch})
             #Comparison between UDACITY and my solution -- NEAR 0.0 In simulation
             # print('q1 diff:', q1-q11)
             # print('q1 diff:', q2-q22)
             # print('q1 diff:', q3-q33)
+            r13 = R3_6_to_num[0,2]
+            r33 = R3_6_to_num[2,2]
+            r22 = R3_6_to_num[1,1]
+            r21 = R3_6_to_num[1,0]
+            r23 = R3_6_to_num[1,2]
 
-
-            q4 = atan2(R3_6[2,2], -R3_6[0,2])
-            q5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
-            q6 = atan2(-R3_6[1,1], R3_6[1,0])
+            q5 = atan2(sqrt(r13**2 + r33**2),r23)
+            if sin(q5) < 0:
+                q4 = atan2(-r33, r13)
+                q6 = atan2(r22, -r21)
+            else:
+                q4 = atan2(r33, -r13)
+                q6 = atan2(-r22, r21)
+            #q4 = atan2(R3_6[2,2], -R3_6[0,2])
+            #q5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
+            #q6 = atan2(-R3_6[1,1], R3_6[1,0])
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables

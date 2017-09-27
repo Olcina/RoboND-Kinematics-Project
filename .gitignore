@@ -7,3 +7,5 @@ WC_calculation.pyc
 DH_transform_matrix.pyc
 writeup_template.md
 images/Thumbs.db
+*.p
+*.pyc
