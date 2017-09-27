@@ -2,28 +2,11 @@ import numpy as np
 import pickle
 from sympy import symbols, cos, sin, pi, sqrt, simplify, symbol, atan2, acos, N
 from sympy.matrices import Matrix
-from DH_transform_matrix import get_DH_transform_matrix
+from DH_transform_matrix import get_DH_transform_matrix, rot_x, rot_y, rot_z
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from WC_calculation import calculate_WC
 
-def rot_x(q):
-    R_x = Matrix([[ 1,              0,        0],
-                  [ 0,        cos(q), -sin(q)],
-                  [ 0,        sin(q),  cos(q)]])
-    return R_x
-
-def rot_y(q):
-    R_y = Matrix([[ cos(q),        0,  sin(q)],
-                  [       0,        1,        0],
-                  [-sin(q),        0,  cos(q)]])
-    return R_y
-
-def rot_z(q):
-    R_z = Matrix([[ cos(q), -sin(q),        0],
-                  [ sin(q),  cos(q),        0],
-                  [ 0,              0,        1]])
-    return R_z
 rad2deg = 180/np.pi
 #load symbols for the DH parameters
 alpha0, alpha1, alpha2, alpha3, alpha4,alpha5, alpha6 = symbols('alpha0:7')

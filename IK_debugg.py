@@ -4,7 +4,7 @@ from mpmath import radians
 import pickle
 import tf
 from WC_calculation import calculate_WC, calculate_EE
-
+from DH_transform_matrix import rot_x, rot_y, rot_z
 '''
 Format of test case is [ [[EE position],[EE orientation as quaternions]],[WC location],[joint angles]]
 You can generate additional test cases by setting up your kuka project and running `$ roslaunch kuka_arm forward_kinematics.launch`
@@ -25,25 +25,6 @@ s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
      alpha5:-pi/2 , a5:      0  , d6:     0 ,
      alpha6:    0 , a6:      0  , d7: 0.303 , tetha7:       0,
 }
-
-def rot_x(q):
-    R_x = Matrix([[ 1,              0,        0],
-                  [ 0,        cos(q), -sin(q)],
-                  [ 0,        sin(q),  cos(q)]])
-    return R_x
-
-def rot_y(q):
-    R_y = Matrix([[ cos(q),        0,  sin(q)],
-                  [       0,        1,        0],
-                  [-sin(q),        0,  cos(q)]])
-    return R_y
-
-def rot_z(q):
-    R_z = Matrix([[ cos(q), -sin(q),        0],
-                  [ sin(q),  cos(q),        0],
-                  [ 0,              0,        1]])
-    return R_z
-
 
 test_cases = {1:[[[2.16135,-1.42635,1.55109],
                   [0.708611,0.186356,-0.157931,0.661967]],
@@ -67,7 +48,6 @@ T0_3 = matrix_dict['T0_3']
 
 
 def test_code(test_case):
-    
     ## Set up code
     ## Do not modify!
     x = 0
@@ -112,7 +92,6 @@ def test_code(test_case):
 
     # Calculate joint angles using Geometric IK method
     r, p, y = symbols('r p y')
-    
     R_X = rot_x(r)
     R_Y = rot_y(p)
     R_Z = rot_z(y)
@@ -134,7 +113,7 @@ def test_code(test_case):
 
     WC_00 = P_ee - s[d7] * ROT_EE[:,2]
     WC_00 = WC_00.subs(s)
-	
+
     ## Insert IK code here!
     #calculate q1
     q1 = atan2(WC_00[1],WC_00[0]).subs(s)
@@ -154,15 +133,15 @@ def test_code(test_case):
     #q2, q3
     q2 = pi/2 - betha1 - betha2
     q3 = pi/2 - betha3 + betha4
-	
+
     #Calculate q4,q5,q6
     angles = {tetha1: q1,tetha2:q2, tetha3:q3}
-    
+
     R0_3 = T0_3[0:3,0:3]
     R0_3 = R0_3.subs(angles)
 
     R3_6 = R0_3.inv("LU") * ROT_EE
-
+    print(R3_6)
 
     q4 = atan2(R3_6[2,2], -R3_6[0,2])
     q5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
@@ -187,7 +166,7 @@ def test_code(test_case):
     angles2_FK = {tetha1: q1,tetha2: q2, tetha3: q3,tetha4: q4,tetha5: q5,tetha6: q6}
     WC_FK = calculate_WC(angles2_FK)
     WC_FK = N(WC_FK)
-    
+
     EE_FK = calculate_EE(angles2_FK)
     EE_FK = N(EE_FK)
 

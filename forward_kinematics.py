@@ -23,8 +23,6 @@ a0,a1,a2,a3,a4,a5,a6 = symbols('a0:7')
 d1,d2,d3,d4,d5,d6,d7 = symbols('d1:8')
 tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
 
-q1,q2,q3,q4,q5,q6 = symbols('q1:7')
-
 #DH parameters
 s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
      alpha1:-pi/2 , a1:   0.35  , d2:     0 , tetha2: tetha2-pi/2,
@@ -65,7 +63,6 @@ trans = Matrix([[0],[0],[0]])
 col = Matrix([[0,0,0,1]])
 R_z = (rot_z(pi).row_join(trans)).col_join(col)
 R_y = (rot_y(-pi/2).row_join(trans)).col_join(col)
-
 print(simplify(R_z))
 print(simplify(R_y))
 

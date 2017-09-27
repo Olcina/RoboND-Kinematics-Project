@@ -27,6 +27,7 @@ T0_3 = matrix_dict['T0_3']
 # rad to deg conversion
 rad2deg = 180/np.pi
 
+
 def handle_calculate_IK(req):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
     if len(req.poses) < 1:
@@ -44,12 +45,6 @@ def handle_calculate_IK(req):
             a0,a1,a2,a3,a4,a5,a6 = symbols('a0:7')
             d1,d2,d3,d4,d5,d6,d7 = symbols('d1:8')
             tetha1, tetha2,tetha3, tetha4,tetha5, tetha6,tetha7 = symbols('tetha1:8')
-
-
-
-            # Joint angle symbols
-            #q1,q2,q3,q4,q5,q6 = symbols('q1:7')
-
 
             # Modified DH params
             s = {alpha0:    0 , a0:      0  , d1:  0.75 ,
@@ -81,7 +76,7 @@ def handle_calculate_IK(req):
 
             # Calculate joint angles using Geometric IK method
             r, p, y = symbols('r p y')
-            
+
             R_X = rot_x(r)
             R_Y = rot_y(p)
             R_Z = rot_z(y)
@@ -123,12 +118,14 @@ def handle_calculate_IK(req):
             #q2, q3
             q22 = pi/2 - betha1 - betha2
             q33 = pi/2 - betha3 + betha4
-	        ## UDACITY CODE for q1, q2, q3 
+
+
+	        ## UDACITY CODE for q1, q2, q3
             q1 = atan2(WC_00[1],WC_00[0])
             side_a =  1.501
             side_b = sqrt(pow((sqrt(WC_00[0]*WC_00[0] + WC_00[1]*WC_00[1]) - 0.35),2) + pow((WC_00[2]-0.75),2))
             side_c = 1.25
-    
+
             angle_a = acos((side_b * side_b + side_c * side_c - side_a * side_a) / (2 * side_b * side_c))
             angle_b = acos((side_a * side_a + side_c * side_c - side_b * side_b) / (2 * side_a * side_c))
             angle_c = acos((side_a * side_a + side_b * side_b - side_c * side_c) / (2 * side_a * side_b))
@@ -138,17 +135,18 @@ def handle_calculate_IK(req):
 
             #Calculate q4,q5,q6
             angles = {tetha1: q1,tetha2:q2, tetha3:q3}
-            
+
             R0_3 = T0_3[0:3,0:3]
             R0_3 = R0_3.subs(angles)
 
             R3_6 = R0_3.inv("LU") * ROT_EE
+
             #Comparison between UDACITY and my solution -- NEAR 0.0 In simulation
-            print('q1 diff:', q1-q11)
-            print('q1 diff:', q2-q22)
-            print('q1 diff:', q3-q33)
-                
-                
+            # print('q1 diff:', q1-q11)
+            # print('q1 diff:', q2-q22)
+            # print('q1 diff:', q3-q33)
+
+
             q4 = atan2(R3_6[2,2], -R3_6[0,2])
             q5 = atan2(sqrt(R3_6[0,2] * R3_6[0,2] + R3_6[2,2] * R3_6[2,2]), R3_6[1,2])
             q6 = atan2(-R3_6[1,1], R3_6[1,0])
